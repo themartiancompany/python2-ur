@@ -1,10 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0
+#
 # Maintainer: Michał Wojdyła < micwoj9292 at gmail dot com >
 # Contributor: Felix Yan <felixonmars@archlinux.org>
 # Contributor: Stéphane Gaudreault <stephane@archlinux.org>
 # Contributor: Allan McRae <allan@archlinux.org>
 # Contributor: Jason Chu <jason@archlinux.org>
+# Contributor: Truocolo <truocolo@aol.com>
+# Contributor: Pellegrino Prevete <pellegrinoprevete@gmail.com>
 
-pkgname=python2
+_py="python"
+pkgname="${_py}2"
 pkgver=2.7.18
 pkgrel=9
 _pybasever=2.7
@@ -12,6 +17,11 @@ pkgdesc="A high-level scripting language"
 arch=(
   'x86_64'
   'aarch64'
+  'arm'
+  'armv7h'
+  'i686'
+  'pentium4'
+  'powerpc'
 )
 license=(
   'PSF'
@@ -38,92 +48,203 @@ checkdepends=(
   'xorg-server-xvfb'
   'xterm'
 )
-optdepends=('tk: for IDLE'
-            'python2-setuptools'
-            'python2-pip')
-conflicts=('python<3')
-_gentoo_patches="python-gentoo-patches-${pkgver}_p16"
-source=("https://www.python.org/ftp/python/${pkgver%rc?}/Python-${pkgver}.tar.xz"{,.asc}
-        mtime-workaround.patch
-        "https://dev.gentoo.org/~mgorny/dist/python/$_gentoo_patches.tar.xz")
-sha512sums=('a7bb62b51f48ff0b6df0b18f5b0312a523e3110f49c3237936bfe56ed0e26838c0274ff5401bda6fc21bf24337477ccac49e8026c5d651e4b4cafb5eb5086f6c'
-            'SKIP'
-            '4e761cfd57791e8b72ecdf84c2e03875bf074311130eea5b8e97409fa304fa3468dbd359a511c4e9978e686e662c58054b4174d3e73f845fa9ded2e83a3a8076'
-            '810be590d0e06fab4b2165e6852ca49662f09dcd7e20b47a29f613ad7653252c8dfac3f0eb228d77c8a914efa7c08788b2fbd552a4b47504f5fd0ec17450c48f')
-validpgpkeys=('C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF')  # Benjamin Peterson
-noextract=("$_gentoo_patches.tar.xz")
+optdepends=(
+  'tk: for IDLE'
+  "${_py}2-setuptools"
+  "${_py}2-pip"
+)
+conflicts=(
+  "${_py}<3"
+)
+_gentoo_patches="${_py}-gentoo-patches-${pkgver}_p16"
+source=(
+  "https://www.${_py}.org/ftp/${_py}/${pkgver%rc?}/Python-${pkgver}.tar.xz"{,.asc}
+  mtime-workaround.patch
+  "https://dev.gentoo.org/~mgorny/dist/${_py}/$_gentoo_patches.tar.xz"
+)
+sha512sums=(
+  'a7bb62b51f48ff0b6df0b18f5b0312a523e3110f49c3237936bfe56ed0e26838c0274ff5401bda6fc21bf24337477ccac49e8026c5d651e4b4cafb5eb5086f6c'
+  'SKIP'
+  '4e761cfd57791e8b72ecdf84c2e03875bf074311130eea5b8e97409fa304fa3468dbd359a511c4e9978e686e662c58054b4174d3e73f845fa9ded2e83a3a8076'
+  '810be590d0e06fab4b2165e6852ca49662f09dcd7e20b47a29f613ad7653252c8dfac3f0eb228d77c8a914efa7c08788b2fbd552a4b47504f5fd0ec17450c48f')
+validpgpkeys=(
+  # Benjamin Peterson
+  'C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF'
+)
+noextract=(
+  "${_gentoo_patches}.tar.xz"
+)
 
 prepare() {
-  bsdtar -xf $_gentoo_patches.tar.xz -s /$_gentoo_patches//
-
-  cd Python-${pkgver}
-
-  # makepkg will touch all files to $SOURCE_DATE_EPOCH which will break pyc file's mtime check.
-  # workaround this by touching them to $SOURCE_DATE_EPOCH before running compileall.
-  patch -p0 -i ../mtime-workaround.patch
-
-  patch -p1 -i ../0001-bpo-39017-Avoid-infinite-loop-in-the-tarfile-module-.patch #CVE-2019-20907
-  patch -p1 -i ../0002-bpo-39503-CVE-2020-8492-Fix-AbstractBasicAuthHandler.patch #CVE-2020-8492
-  patch -p1 -i ../0003-bpo-39603-Prevent-header-injection-in-http-methods-G.patch #CVE-2020-26116
-  patch -p1 -i ../0004-bpo-42051-Reject-XML-entity-declarations-in-plist-fi.patch
-  patch -p1 -i ../0005-bpo-41944-No-longer-call-eval-on-content-received-vi.patch #CVE-2020-27619
-  patch -p1 -i ../0006-bpo-40791-Make-compare_digest-more-constant-time.-GH.patch
-  patch -p1 -i ../0007-3.6-closes-bpo-42938-Replace-snprintf-with-Python-un.patch #CVE-2021-3177
-  patch -p1 -i ../0008-3.6-bpo-42967-only-use-as-a-query-string-separator-G.patch #CVE-2021-23336
-  patch -p1 -i ../0009-py2-ize-the-CJK-codec-test.patch
-  patch -p1 -i ../0010-3.6-bpo-43285-Make-ftplib-not-trust-the-PASV-respons.patch
-  patch -p1 -i ../0011-bpo-43075-Fix-ReDoS-in-urllib-AbstractBasicAuthHandl.patch
-  patch -p1 -i ../0012-3.9-bpo-43882-urllib.parse-should-sanitize-urls-cont.patch
-  patch -p1 -i ../0013-Backport-bpo-44022-Fix-http-client-infinite-line-rea.patch
-  patch -p1 -i ../0014-bpo-43124-Fix-smtplib-multiple-CRLF-injection-GH-259.patch
-  patch -p1 -i ../0015-bpo-42278-Use-tempfile.TemporaryDirectory-rather-tha.patch
-  patch -p1 -i ../0016-Fix-accidentally-leaving-one-sub-test-commented-out.patch
-  patch -p1 -i ../0017-bpo-46811-Make-test-suite-support-Expat-2.4.5-GH-314.patch
+  bsdtar \
+    -xf ${_gentoo_patches}.tar.xz \
+    -s /"${_gentoo_patches}"//
+  cd \
+    "Python-${pkgver}"
+  # makepkg will touch all files to 
+  # $SOURCE_DATE_EPOCH which will break
+  # pyc file's mtime check.
+  # workaround this by touching them
+  # to $SOURCE_DATE_EPOCH before running compileall.
+  patch \
+    -p0 \
+    -i \
+      ../mtime-workaround.patch
+  # CVE-2019-20907
+  patch \
+    -p1 \
+    -i \
+    ../0001-bpo-39017-Avoid-infinite-loop-in-the-tarfile-module-.patch
+  # CVE-2020-8492
+  patch \
+    -p1 \
+    -i \
+      ../0002-bpo-39503-CVE-2020-8492-Fix-AbstractBasicAuthHandler.patch
+  # CVE-2020-26116
+  patch \
+    -p1 \
+    -i \
+      ../0003-bpo-39603-Prevent-header-injection-in-http-methods-G.patch
+  patch \
+    -p1 \
+    -i \
+      ../0004-bpo-42051-Reject-XML-entity-declarations-in-plist-fi.patch
+  # CVE-2020-27619
+  patch \
+    -p1 \
+    -i \
+      ../0005-bpo-41944-No-longer-call-eval-on-content-received-vi.patch
+  patch \
+    -p1 \
+    -i \
+      ../0006-bpo-40791-Make-compare_digest-more-constant-time.-GH.patch
+  # CVE-2021-3177
+  patch \
+    -p1 \
+    -i \
+      ../0007-3.6-closes-bpo-42938-Replace-snprintf-with-Python-un.patch
+  # CVE-2021-23336
+  patch \
+    -p1 \
+    -i \
+      ../0008-3.6-bpo-42967-only-use-as-a-query-string-separator-G.patch
+  patch \
+    -p1 \
+    -i \
+      ../0009-py2-ize-the-CJK-codec-test.patch
+  patch \
+    -p1 \
+    -i \
+      ../0010-3.6-bpo-43285-Make-ftplib-not-trust-the-PASV-respons.patch
+  patch \
+    -p1 \
+    -i \
+      ../0011-bpo-43075-Fix-ReDoS-in-urllib-AbstractBasicAuthHandl.patch
+  patch \
+    -p1 \
+    -i \
+      ../0012-3.9-bpo-43882-urllib.parse-should-sanitize-urls-cont.patch
+  patch \
+    -p1 \
+    -i \
+      ../0013-Backport-bpo-44022-Fix-http-client-infinite-line-rea.patch
+  patch \
+    -p1 \
+    -i \
+      ../0014-bpo-43124-Fix-smtplib-multiple-CRLF-injection-GH-259.patch
+  patch \
+    -p1 \
+    -i \
+      ../0015-bpo-42278-Use-tempfile.TemporaryDirectory-rather-tha.patch
+  patch \
+    -p1 \
+    -i \
+      ../0016-Fix-accidentally-leaving-one-sub-test-commented-out.patch
+  patch \
+    -p1 \
+    -i \
+      ../0017-bpo-46811-Make-test-suite-support-Expat-2.4.5-GH-314.patch
 
   # Temporary workaround for FS#22322
   # See http://bugs.python.org/issue10835 for upstream report
-  sed -i "/progname =/s/python/python${_pybasever}/" Python/pythonrun.c
+  sed \
+    -i \
+    "/progname =/s/${_py}/${_py}${_pybasever}/" \
+    "Python/${_py}run.c"
 
   # Enable built-in SQLite module to load extensions (fix FS#22122)
-  sed -i "/SQLITE_OMIT_LOAD_EXTENSION/d" setup.py
+  sed \
+    -i \
+    "/SQLITE_OMIT_LOAD_EXTENSION/d" \
+    setup.py
 
   # FS#23997
-  sed -i -e "s|^#.* /usr/local/bin/python|#!/usr/bin/python2|" Lib/cgi.py
+  sed \
+    -i \
+    -e \
+      "s|^#.* /usr/local/bin/${_py}|#!/usr/bin/${_py}2|" \
+      Lib/cgi.py
 
-  sed -i "s/python2.3/python2/g" Lib/distutils/tests/test_build_scripts.py \
+  sed \
+    -i \
+    "s/${_py}2.3/${_py}2/g" \
+    Lib/distutils/tests/test_build_scripts.py \
     Lib/distutils/tests/test_install_scripts.py
 
-  # Ensure that we are using the system copy of various libraries (expat, zlib and libffi),
+  # Ensure that we are using the system copy
+  # of various libraries (expat, zlib and libffi),
   # rather than copies shipped in the tarball
-  rm -r Modules/expat
-  rm -r Modules/zlib
-  rm -r Modules/_ctypes/{darwin,libffi}*
+  rm \
+    -r \
+      Modules/expat
+  rm \
+    -r \
+      Modules/zlib
+  rm \
+    -r \
+    Modules/_ctypes/{darwin,libffi}*
 
   # clean up #!s
-  find . -name '*.py' | \
-    xargs sed -i "s|#[ ]*![ ]*/usr/bin/env python$|#!/usr/bin/env python2|"
+  find \
+    . \
+    -name '*.py' | \
+      xargs \
+        sed \
+	  -i \
+	    "s|#[ ]*![ ]*/usr/bin/env ${_py}$|#!/usr/bin/env ${_py}2|"
 
-  # Workaround asdl_c.py/makeopcodetargets.py errors after we touched the shebangs
-  touch Include/Python-ast.h Python/Python-ast.c Python/opcode_targets.h
+  # Workaround asdl_c.py/makeopcodetargets.py
+  # errors after we touched the shebangs
+  touch \
+    Include/Python-ast.h \
+    Python/Python-ast.c \
+    Python/opcode_targets.h
 }
 
 build() {
-  cd "${srcdir}/Python-${pkgver}"
+  local \
+    _opts=()
+  cd \
+    "${srcdir}/Python-${pkgver}"
   CPPFLAGS+=" -I/usr/include/openssl-1.1"
   LDFLAGS+=" -L/usr/lib/openssl-1.1"
-  export OPT="${CFLAGS}"
-  ./configure --prefix=/usr \
-              --enable-shared \
-              --with-threads \
-              --enable-optimizations \
-              --with-lto \
-              --enable-ipv6 \
-              --enable-unicode=ucs4 \
-              --with-system-expat \
-              --with-system-ffi \
-              --with-dbmliborder=gdbm:ndbm \
-              --without-ensurepip
-
+  export \
+    OPT="${CFLAGS}"
+  _opts=(
+    --prefix=/usr
+    --enable-shared
+    --with-threads
+    --enable-optimizations
+    --with-lto
+    --enable-ipv6
+    --enable-unicode=ucs4
+    --with-system-expat
+    --with-system-ffi
+    --with-dbmliborder=gdbm:ndbm
+    --without-ensurepip
+  )
+  ./configure \
+    "${_opts[@]}"
   make
 }
 
@@ -137,43 +258,99 @@ check() {
   local -x TZ=UTC
   cd Python-${pkgver}
   LD_LIBRARY_PATH="${srcdir}/Python-${pkgver}":${LD_LIBRARY_PATH} \
-    xvfb-run "${srcdir}/Python-${pkgver}/python" -m test.regrtest -v -uall -x test_idle test_tk test_ttk_guionly test_ctypes test_ssl test_ftplib test_imaplib test_urllib2_localnet test_codecmaps_jp
+    xvfb-run \
+      "${srcdir}/Python-${pkgver}/${_py}" \
+      -m test.regrtest \
+      -v \
+      -uall \
+      -x \
+        test_idle \
+	test_tk \
+	test_ttk_guionly \
+	test_ctypes \
+	test_ssl \
+	test_ftplib \
+	test_imaplib \
+	test_urllib2_localnet \
+	test_codecmaps_jp
 }
 
 package() {
   cd Python-${pkgver}
 
   # Hack to avoid building again
-  sed -i 's/^all:.*$/all: build_all/' Makefile
+  sed \
+    -i \
+    's/^all:.*$/all: build_all/' \
+    Makefile
+  make \
+    DESTDIR="${pkgdir}" \
+    altinstall \
+    maninstall
 
-  make DESTDIR="${pkgdir}" altinstall maninstall
+  rm \
+    "${pkgdir}/usr/share/man/man1/${_py}.1"
 
-  rm "${pkgdir}"/usr/share/man/man1/python.1
-
-  ln -sf python${_pybasever}        "${pkgdir}"/usr/bin/python2
-  ln -sf python${_pybasever}-config "${pkgdir}"/usr/bin/python2-config
-  ln -sf python${_pybasever}.1      "${pkgdir}"/usr/share/man/man1/python2.1
+  ln \
+    -sf \
+      "${_py}${_pybasever}" \
+      "${pkgdir}/usr/bin/${_py}2"
+  ln \
+    -sf \
+    "${_py}${_pybasever}-config" \
+    "${pkgdir}/usr/bin/${_py}2-config"
+  ln \
+    -sf \
+    "${_py}${_pybasever}.1" \
+    "${pkgdir}"/usr/share/man/man1/python2.1
 
   # FS#33954
-  ln -sf python-${_pybasever}.pc    "${pkgdir}"/usr/lib/pkgconfig/python2.pc
+  ln \
+    -sf \
+    python-${_pybasever}.pc \
+    "${pkgdir}"/usr/lib/pkgconfig/python2.pc
 
-  ln -sf ../../libpython${_pybasever}.so "${pkgdir}"/usr/lib/python${_pybasever}/config/libpython${_pybasever}.so
+  ln \
+    -sf \
+    ../../libpython${_pybasever}.so \
+    "${pkgdir}"/usr/lib/python${_pybasever}/config/libpython${_pybasever}.so
 
-  mv "${pkgdir}"/usr/bin/smtpd.py "${pkgdir}"/usr/lib/python${_pybasever}/
+  mv \
+    "${pkgdir}"/usr/bin/smtpd.py \
+    "${pkgdir}"/usr/lib/python${_pybasever}/
 
   # some useful "stuff"
-  install -dm755 "${pkgdir}"/usr/lib/python${_pybasever}/Tools/{i18n,scripts}
-  install -m755 Tools/i18n/{msgfmt,pygettext}.py "${pkgdir}"/usr/lib/python${_pybasever}/Tools/i18n/
-  install -m755 Tools/scripts/{README,*py} "${pkgdir}"/usr/lib/python${_pybasever}/Tools/scripts/
+  install \
+    -dm755 \
+    "${pkgdir}"/usr/lib/python${_pybasever}/Tools/{i18n,scripts}
+  install \
+    -m755 \
+    Tools/i18n/{msgfmt,pygettext}.py \
+    "${pkgdir}"/usr/lib/python${_pybasever}/Tools/i18n/
+  install \
+    -m755 \
+      Tools/scripts/{README,*py} \
+      "${pkgdir}"/usr/lib/python${_pybasever}/Tools/scripts/
 
   # fix conflicts with python
-  mv "${pkgdir}"/usr/bin/idle{,2}
-  mv "${pkgdir}"/usr/bin/pydoc{,2}
-  mv "${pkgdir}"/usr/bin/2to3{,-2.7}
+  mv \
+    "${pkgdir}"/usr/bin/idle{,2}
+  mv \
+    "${pkgdir}"/usr/bin/pydoc{,2}
+  mv \
+    "${pkgdir}"/usr/bin/2to3{,-2.7}
 
   # clean-up reference to build directory
-  sed -i "s#${srcdir}/Python-${pkgver}:##" "${pkgdir}"/usr/lib/python${_pybasever}/config/Makefile
+  sed \
+    -i \
+    "s#${srcdir}/Python-${pkgver}:##" \
+    "${pkgdir}"/usr/lib/python${_pybasever}/config/Makefile
 
   # license
-  install -Dm644 LICENSE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
+  install \
+    -Dm644 \
+    LICENSE \
+    "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
 }
+
+# vim: ft=sh syn=sh et
