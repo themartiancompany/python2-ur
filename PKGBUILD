@@ -9,12 +9,35 @@ pkgver=2.7.18
 pkgrel=9
 _pybasever=2.7
 pkgdesc="A high-level scripting language"
-arch=('x86_64' 'aarch64')
-license=('PSF')
+arch=(
+  'x86_64'
+  'aarch64'
+)
+license=(
+  'PSF'
+)
 url="https://www.python.org/"
-depends=('bzip2' 'expat' 'gdbm' 'libffi' 'libnsl' 'libxcrypt' 'openssl-1.1'  'sqlite' 'zlib')
-makedepends=('tk' 'bluez-libs')
-checkdepends=('gdb' 'file' 'xorg-server-xvfb' 'xterm')
+depends=(
+  'bzip2'
+  'expat'
+  'gdbm'
+  'libffi'
+  'libnsl'
+  'libxcrypt'
+  'openssl-1.1'
+  'sqlite'
+  'zlib'
+)
+makedepends=(
+  'tk'
+  'bluez-libs'
+)
+checkdepends=(
+  'gdb'
+  'file'
+  'xorg-server-xvfb'
+  'xterm'
+)
 optdepends=('tk: for IDLE'
             'python2-setuptools'
             'python2-pip')
