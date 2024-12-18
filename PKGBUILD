@@ -223,14 +223,27 @@ prepare() {
 
 build() {
   local \
-    _opts=()
+    _configure_opts=() \
+    _cflags=() \
+    _cxxflags=()
+  _cflags=(
+    "${CFLAGS}"
+    -Wno-"incompatible-pointer-types"
+  )
+  _cxxflags=(
+    "${CXXFLAGS}"
+    -Wno-"incompatible-pointer-types"
+  )
+  export \
+    CFLAGS="${_cflags[*]}" \
+    CXXFLAGS="${_cxxflags[*]}"
   cd \
     "${srcdir}/Python-${pkgver}"
   CPPFLAGS+=" -I/usr/include/openssl-1.1"
   LDFLAGS+=" -L/usr/lib/openssl-1.1"
   export \
     OPT="${CFLAGS}"
-  _opts=(
+  _configure_opts=(
     --prefix=/usr
     --enable-shared
     --with-threads
@@ -243,8 +256,12 @@ build() {
     --with-dbmliborder=gdbm:ndbm
     --without-ensurepip
   )
+  CFLAGS="${_cflags[*]}" \
+  CXXFLAGS="${_cxxflags[*]}" \
   ./configure \
-    "${_opts[@]}"
+    "${_configure_opts[@]}"
+  CFLAGS="${_cflags[*]}" \
+  CXXFLAGS="${_cxxflags[*]}" \
   make
 }
 
